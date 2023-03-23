@@ -58,7 +58,9 @@ def glavnaya():
     obrab_komand_thread = threading.Thread(target=obrab_komand, kwargs={
                                            'in_q': cmd_queue, 'out_q': reply_queue, 'fin_q': finish_queue})
     obrab_komand_thread.start()
-    cmd_queue.put(kmd_examples['cmd_start'])
+    if DEBUG:
+        cmd_queue.put(kmd_examples['cmd_kill'])
+        cmd_queue.put(kmd_examples['cmd_exit'])
     obrab_komand_thread.join()
 
 
@@ -100,11 +102,11 @@ def obrab_komand(in_q: Queue, out_q: Queue, fin_q: Queue) -> None:
         reply_msg['text'] = msg
 
     selector = {
-        'cmd_kill': cmd_kill,
-        'cmd_start': cmd_start,
-        'cmd_reboot': cmd_reboot,
-        'cmd_exit': cmd_exit,
-        'cmd_test': cmd_test
+        'kill': cmd_kill,
+        'start': cmd_start,
+        'reboot': cmd_reboot,
+        'exit': cmd_exit,
+        'test': cmd_test
     }
     
     while True:
@@ -114,14 +116,13 @@ def obrab_komand(in_q: Queue, out_q: Queue, fin_q: Queue) -> None:
         try:
             reply_msg['id'] = cmd['id']
             action = cmd['do']
-        except KeyError as ke:
-            put_error('Несуществующее поле: ' + ke.args[0])
-        else:
             selector[action]()
+        except KeyError as ke:
+            put_error('Несуществующее поле: ' + ke.args[0])            
         finally:
             out_q.put(reply_msg)        
 
-        if not fin_q.empty:
+        if not fin_q.empty():
             break
 
 
