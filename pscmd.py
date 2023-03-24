@@ -10,9 +10,10 @@ import psutil
 import subprocess
 import os
 import paho.mqtt.client as mqtt
-import kmd_examples as samples
+import sys
 
 DEBUG = True
+
 
 def obrab_komand(in_q: Queue, out_q: Queue, fin_q: Queue) -> None:
 
@@ -24,9 +25,6 @@ def obrab_komand(in_q: Queue, out_q: Queue, fin_q: Queue) -> None:
         for p in pslist:
             p.terminate()
         put_error(msg)
-    
-    if DEBUG:
-        print('Поток обработки команд: ' + threading.current_thread().name)
 
     while True:
         cmd = in_q.get()
@@ -93,6 +91,15 @@ def obrab_komand(in_q: Queue, out_q: Queue, fin_q: Queue) -> None:
         if not fin_q.empty():
             break
 
+
+def send_replies(out_q: Queue, fin_q: Queue, broker: mqtt.Client, topic):
+    while True:
+        broker.publish(topic, json.dumps(
+            out_q.get(), ensure_ascii=False, indent=4))
+        if not fin_q.empty():
+            break
+
+
 def getArgs():
     server = 'localhost'
     inbox = 'cabincmd/in'
@@ -106,24 +113,49 @@ def glavnaya():
 
     # Если засунуть в finish_queue True - то перезагрузка, если False - то выход из программы
     finish_queue = Queue()
+    broker, inbox, outbox = getArgs()
+
+    def on_connect(client, userdata, flags, rc):
+        client.subscribe(inbox)
+
+    def on_message(client, userdata, msg):
+        try:
+            cmd_queue.put(json.loads(msg.payload))
+        except json.JSONDecodeError as err:
+            reply = {}
+            reply['result'] = False
+            reply['text'] = 'Ошибка чтения JSON: '+err.msg + \
+                ' Строка:' + str(err.lineno) + ' столбец:'+str(err.colno)
+            reply['source'] = msg.payload.decode('utf-8')
+            reply_queue.put(reply)
+
+    mqttc = mqtt.Client()
+    mqttc.on_connect = on_connect
+    mqttc.on_message = on_message
+    mqttc.connect_async(broker)
+    mqttc.loop_start()
     obrab_komand_thread = threading.Thread(target=obrab_komand, kwargs={
                                            'in_q': cmd_queue,
                                            'out_q': reply_queue,
                                            'fin_q': finish_queue})
     obrab_komand_thread.start()
-    if DEBUG:
-        cmd_queue.put(samples.kmd_examples['cmd_kill'])
-        cmd_queue.put(samples.kmd_examples['cmd_start'])
-        cmd_queue.put(samples.kmd_examples['cmd_test'])
-        cmd_queue.put(samples.kmd_examples['cmd_exit'])
-        print('Главный поток: ' + threading.current_thread().name)
+    send_replies_thread = threading.Thread(target=send_replies, kwargs={
+                                           'out_q': reply_queue,
+                                           'fin_q': finish_queue,
+                                           'broker': mqttc,
+                                           'topic': outbox})
+    send_replies_thread.start()
     obrab_komand_thread.join()
-    if DEBUG:
-        while not reply_queue.empty():
-            print(reply_queue.get())
-        while not finish_queue.empty():
-            print(finish_queue.get())
+    send_replies_thread.join()
+    time.sleep(1)
+    mqttc.loop_stop()
+    mqttc.disconnect()
 
 
 if __name__ == '__main__':
-    glavnaya()
+    if sys.version_info[0] == 3 and sys.version_info[1] > 9:
+        glavnaya()
+    else:
+        print('Требуется версия Python > 3.9. Текущая версия: ' +
+              sys.version, file=sys.stderr)
+        sys.exit(1)
