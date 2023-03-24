@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Запуск и остановка процессов
 """
@@ -8,51 +9,10 @@ import time
 import psutil
 import subprocess
 import os
+import paho.mqtt.client as mqtt
+import kmd_examples as samples
 
 DEBUG = True
-
-kmd_examples = {}
-
-kmd_examples['cmd_kill'] = {
-    'do': 'kill',
-    'ps': ['tar', 'gzip', 'dd'],
-    'id': 'ab12-de13'
-}
-
-kmd_examples['cmd_start'] = {
-    'do': 'start',
-    'ps':
-        [
-            {
-                'cmd': ['/usr/bin/dd', 'if=/dev/zero', 'of=/dev/null']
-            },
-            {
-                'cmd': ['/usr/bin/pss', '-ax'],
-                'env': {
-                    'LD_LIBRARY_PATH': '/opt/mylib',
-                    'SOME_PARAMETER': 'value-x'
-                },
-                'cwd': '/tmp'
-            }
-        ],
-    'id': 'de14-8822'
-}
-
-kmd_examples['cmd_reboot'] = {
-    'do': 'reboot',
-    'id': '236d-45f2'
-}
-
-kmd_examples['cmd_exit'] = {
-    'do': 'exit',
-    'id': 'daf4-5f27'
-}
-
-kmd_examples['cmd_test'] = {
-    'do': 'test',
-    'id': 'daf8-5f27'
-}
-
 
 def obrab_komand(in_q: Queue, out_q: Queue, fin_q: Queue) -> None:
 
@@ -64,6 +24,9 @@ def obrab_komand(in_q: Queue, out_q: Queue, fin_q: Queue) -> None:
         for p in pslist:
             p.terminate()
         put_error(msg)
+    
+    if DEBUG:
+        print('Поток обработки команд: ' + threading.current_thread().name)
 
     while True:
         cmd = in_q.get()
@@ -130,6 +93,12 @@ def obrab_komand(in_q: Queue, out_q: Queue, fin_q: Queue) -> None:
         if not fin_q.empty():
             break
 
+def getArgs():
+    server = 'localhost'
+    inbox = 'cabincmd/in'
+    outbox = 'cabincmd/out'
+    return server, inbox, outbox
+
 
 def glavnaya():
     cmd_queue = Queue()
@@ -143,10 +112,11 @@ def glavnaya():
                                            'fin_q': finish_queue})
     obrab_komand_thread.start()
     if DEBUG:
-        cmd_queue.put(kmd_examples['cmd_kill'])
-        cmd_queue.put(kmd_examples['cmd_start'])
-        cmd_queue.put(kmd_examples['cmd_test'])
-        cmd_queue.put(kmd_examples['cmd_exit'])
+        cmd_queue.put(samples.kmd_examples['cmd_kill'])
+        cmd_queue.put(samples.kmd_examples['cmd_start'])
+        cmd_queue.put(samples.kmd_examples['cmd_test'])
+        cmd_queue.put(samples.kmd_examples['cmd_exit'])
+        print('Главный поток: ' + threading.current_thread().name)
     obrab_komand_thread.join()
     if DEBUG:
         while not reply_queue.empty():
@@ -156,10 +126,4 @@ def glavnaya():
 
 
 if __name__ == '__main__':
-    if DEBUG:
-        for kmd in kmd_examples:
-            json.dump(kmd_examples[kmd],
-                      open(kmd + '.json', 'w'),
-                      ensure_ascii=False,
-                      indent=4)
     glavnaya()
