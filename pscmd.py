@@ -11,8 +11,8 @@ import subprocess
 import os
 import paho.mqtt.client as mqtt
 import sys
-
-DEBUG = True
+import argparse
+import kmd_examples as kmds
 
 
 def obrab_komand(in_q: Queue, out_q: Queue, fin_q: Queue) -> None:
@@ -101,17 +101,33 @@ def send_replies(out_q: Queue, fin_q: Queue, broker: mqtt.Client, topic):
 
 
 def getArgs():
-    server = 'localhost'
-    inbox = 'cabincmd/in'
-    outbox = 'cabincmd/out'
-    return server, inbox, outbox
+    parser = argparse.ArgumentParser(
+        description='Запуск и остановка процессов')
+    parser.add_argument('-s', '--server',
+                        type=str,
+                        default='localhost',
+                        help='Адрес MQTT сервера',
+                        required=False)
+    parser.add_argument('-i', '--inbox',
+                        type=str,
+                        default='cabincmd/in',
+                        help='Ящик для входящих команд',
+                        required=False)
+    parser.add_argument('-o', '--outbox',
+                        type=str,
+                        default='cabincmd/out',
+                        help='Ящик для исходящих ответов',
+                        required=False)
+    args = parser.parse_args()
+    return args.server, args.inbox, args.outbox
 
 
 def glavnaya():
     cmd_queue = Queue()
     reply_queue = Queue()
 
-    # Если засунуть в finish_queue True - то перезагрузка, если False - то выход из программы
+    # Если засунуть в finish_queue True - то перезагрузка,
+    # если False - то выход из программы
     finish_queue = Queue()
     broker, inbox, outbox = getArgs()
 
@@ -128,12 +144,31 @@ def glavnaya():
                 ' Строка:' + str(err.lineno) + ' столбец:'+str(err.colno)
             reply['source'] = msg.payload.decode('utf-8')
             reply_queue.put(reply)
+    
+    def on_connect_fail():
+        print('Не могу подключиться к MQTT брокеру ' + broker, file=sys.stderr)
+        cmd_queue.put(kmds.kmd_examples['cmd_exit'])
 
+    def on_disconnect(client, userdata, rc):
+        print('Произошло отключение от MQTT брокера ' + broker, file=sys.stderr)
+        while True:
+            try:
+                client.connect()
+            except ConnectionRefusedError or OSError:
+                print('Пытаюсь переподключиться к MQTT брокеру ' + broker, file=sys.stderr)
+                time.sleep(1)
+            else:
+                break
+        
     mqttc = mqtt.Client()
     mqttc.on_connect = on_connect
     mqttc.on_message = on_message
-    mqttc.connect_async(broker)
-    mqttc.loop_start()
+    mqttc.on_connect_fail = on_connect_fail
+    try:
+        mqttc.connect(broker)
+    except OSError as cr:
+        print('Не могу подключиться к MQTT брокеру ' + broker + ' ' + cr.strerror, file=sys.stderr)
+        cmd_queue.put(kmds.kmd_examples['cmd_exit'])
     obrab_komand_thread = threading.Thread(target=obrab_komand, kwargs={
                                            'in_q': cmd_queue,
                                            'out_q': reply_queue,
@@ -145,11 +180,14 @@ def glavnaya():
                                            'broker': mqttc,
                                            'topic': outbox})
     send_replies_thread.start()
+    mqttc.loop_start()
     obrab_komand_thread.join()
     send_replies_thread.join()
     time.sleep(1)
     mqttc.loop_stop()
     mqttc.disconnect()
+    if (finish_queue.get()):
+        subprocess.run(['/usr/bin/systemctl', 'reboot', '-i'])
 
 
 if __name__ == '__main__':
