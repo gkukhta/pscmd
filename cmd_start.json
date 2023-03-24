@@ -3,23 +3,21 @@
     "ps": [
         {
             "cmd": [
-                "/usr/bin/ps",
-                "-ax"
-            ],
-            "env": [
-                [
-                    "LD_LIBRARY_PATH",
-                    "/opt/mylib"
-                ]
-            ],
-            "cwd": "/tmp"
-        },
-        {
-            "cmd": [
                 "/usr/bin/dd",
                 "if=/dev/zero",
                 "of=/dev/null"
             ]
+        },
+        {
+            "cmd": [
+                "/usr/bin/pss",
+                "-ax"
+            ],
+            "env": {
+                "LD_LIBRARY_PATH": "/opt/mylib",
+                "SOME_PARAMETER": "value-x"
+            },
+            "cwd": "/tmp"
         }
     ],
     "id": "de14-8822"
