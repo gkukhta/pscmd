@@ -12,7 +12,6 @@ import os
 import paho.mqtt.client as mqtt
 import sys
 import argparse
-import kmd_examples as kmds
 
 
 def obrab_komand(in_q: Queue, out_q: Queue, fin_q: Queue) -> None:
