@@ -120,17 +120,7 @@ def getArgs():
     args = parser.parse_args()
     return args.server, args.inbox, args.outbox
 
-
-def glavnaya():
-    cmd_queue = Queue()
-    reply_queue = Queue()
-
-    # Если засунуть в finish_queue True - то перезагрузка,
-    # если False - то выход из программы
-    finish_queue = Queue()
-    broker, inbox, outbox = getArgs()
-
-    def try_connect(client: mqtt.Client, broker: str):
+def try_connect(client: mqtt.Client, broker: str):
         while True:
             try:
                 client.connect(broker)
@@ -141,6 +131,15 @@ def glavnaya():
             else:
                 print('Подключился к MQTT брокеру ' + broker, file=sys.stderr)
                 break
+
+def glavnaya():
+    cmd_queue = Queue()
+    reply_queue = Queue()
+
+    # Если засунуть в finish_queue True - то перезагрузка,
+    # если False - то выход из программы
+    finish_queue = Queue()
+    broker, inbox, outbox = getArgs()
 
     def on_connect(client: mqtt.Client, userdata, flags, rc):
         client.subscribe(inbox)
