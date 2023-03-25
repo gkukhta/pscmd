@@ -120,17 +120,19 @@ def getArgs():
     args = parser.parse_args()
     return args.server, args.inbox, args.outbox
 
+
 def try_connect(client: mqtt.Client, broker: str):
-        while True:
-            try:
-                client.connect(broker)
-            except OSError:
-                print('Пытаюсь подключиться к MQTT брокеру ' +
-                      broker, file=sys.stderr)
-                time.sleep(1)
-            else:
-                print('Подключился к MQTT брокеру ' + broker, file=sys.stderr)
-                break
+    while True:
+        try:
+            client.connect(broker)
+        except OSError:
+            print('Пытаюсь подключиться к MQTT брокеру ' +
+                  broker, file=sys.stderr)
+            time.sleep(1)
+        else:
+            print('Подключился к MQTT брокеру ' + broker, file=sys.stderr)
+            break
+
 
 def glavnaya():
     cmd_queue = Queue()
