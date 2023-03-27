@@ -6,6 +6,7 @@ WorkingDirectory=%h/.local/pscmd
 ExecStart=%h/.local/pscmd/.venv/bin/python pscmd.py
 Type=exec
 Restart=always
+RestartSec=1
 
 [Install]
 WantedBy=default.target
