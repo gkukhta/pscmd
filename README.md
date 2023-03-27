@@ -12,17 +12,26 @@
 Файл [requirements.txt](requirements.txt) получен командой `python -m pip freeze > requirements.txt` и поправлен вручную.
 
 Для установки зависимостей
-1. Перейдём в каталог где лежит программа [pscmd.py](pscmd.py) , в дальнейшем будем считать что это каталог /`home/super/cabincmd` .
-2. Создадим виртуальное окружение командой `python3.10 -m venv .venv` 
-3. Активируем его командой `source .venv/bin/activate`
-4. Проверим версию Python
-```
-(.venv) [super@cabin2 cabincmd]$ python --version
-Python 3.10.8
-```
-5. установим зависимости программы командой `python -m pip install -r requirements.txt`
+
+    1. Перейдём в каталог где лежит программа [pscmd.py](pscmd.py) , в дальнейшем будем считать что это каталог `$HOME/.local/pscmd` .
+    2. Создадим виртуальное окружение командой `python3.10 -m venv .venv` (вместо python3.10 можно указать более свежую версию Python, если имеется).
+    3. Активируем его командой `source .venv/bin/activate`
+    4. Проверим версию Python
+    ```
+    (.venv) [super@cabin2 cabincmd]$ python --version
+    Python 3.10.8
+    ```
+    5. установим зависимости программы командой `python -m pip install -r requirements.txt`
 
 - ### Запуск сервиса `pscmd.py`
+
     1. Разрешаем запуск пользовательских сервисов без логина в систему командой `loginctl enable-linger super`
-    22. test8777
+    2. Создадим каталог, где будет находиться сервис pscmd `mkdir -p ~/.config/systemd/user`
+    3. Копируем туда файл сервиса [pscmd.service](pscmd.service) `cp pscmd.service ~/.config/systemd/user`
+    4. Запускаем сервис:
+    ```bash
+    systemctl --user enable pscmd.service
+    systemctl --user start pscmd.service
+    systemctl --user status pscmd.service
+    ```
 

@@ -1,0 +1,11 @@
+[Unit]
+Description=pscmd service
+
+[Service]
+WorkingDirectory=%h/.local/pscmd
+ExecStart=%h/.local/pscmd/.venv/bin/python pscmd.py
+Type=exec
+Restart=always
+
+[Install]
+WantedBy=default.target
