@@ -38,5 +38,16 @@
         1. Запрещаем запуск пользовательских сервисов без логина в систему командой `loginctl disable-linger super`
         2. Создадим каталог, где будет находиться сервис pscmd `mkdir -p ~/.config/systemd/user`
         3. Копируем туда файл сервиса [pscmd.service](pscmd.service) `cp pscmd.service ~/.config/systemd/user`
-        4. Копируем туда файл таймера [pscmd.timer](pscmd.timer) `cp pscmd.timer ~/.config/systemd/user` 
-        В таймере прописана задержка старта сервиса в 30 секунд после активации таймера.
+        4. Копируем туда файл таймера [pscmd.timer](pscmd.timer) `cp pscmd.timer ~/.config/systemd/user` .
+        В таймере прописана задержка старта сервиса в 1 секунду после активации таймера.
+        5. Запускаем таймер:
+        ```bash
+        systemctl --user enable pscmd.timer        
+        systemctl --user disable pscmd.service
+        systemctl --user start pscmd.timer
+        systemctl --user status pscmd.timer
+        ```
+        Через 1 секунду смотрим статус сервиса:
+        ```bash
+        systemctl --user status pscmd.timer
+        ```

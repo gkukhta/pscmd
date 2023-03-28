@@ -2,7 +2,7 @@
 Description=Таймер для pscmd
 
 [Timer]
-OnActiveSec=5
+OnActiveSec=1
 
 [Install]
 WantedBy=default.target
