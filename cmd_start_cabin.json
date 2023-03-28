@@ -9,15 +9,6 @@
                 "LD_LIBRARY_PATH": "/home/super/build-CABINE-Desktop-Debug"
             },
             "cwd": "/home/super/build-CABINE-Desktop-Debug"
-        },
-        {
-            "cmd": [
-                "/home/super/build-ConsoleApplication49_linux-Desktop-Release/ConsoleApplication49_linux"
-            ],
-            "env": {
-                "LD_LIBRARY_PATH": "/home/super/build-ConsoleApplication49_linux-Desktop-Release"
-            },
-            "cwd": "/home/super/build-ConsoleApplication49_linux-Desktop-Release"
         }
     ],
     "id": "abcd-8888"
