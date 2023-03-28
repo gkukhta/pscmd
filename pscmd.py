@@ -60,8 +60,11 @@ def obrab_komand(in_q: Queue, out_q: Queue, fin_q: Queue) -> None:
                                 cwd = p['cwd']
                             except KeyError:
                                 cwd = None
-                            pslist.append(subprocess.Popen(
-                                p['cmd'], env=env, cwd=cwd))
+                            proc = subprocess.Popen(p['cmd'], env=env, cwd=cwd)
+                            pslist.append(proc)
+                            # чтобы не было зомби
+                            threading.Thread(
+                                target=lambda ps: ps.wait(), args=[proc]).start()
                     except KeyError as ke:
                         kill_list(pslist,
                                   'Ошибка при запуске процесса. Несуществующее поле: ' + ke.args[0])
