@@ -6,12 +6,18 @@
                 "/usr/bin/dd",
                 "if=/dev/zero",
                 "of=/dev/null"
-            ]
+            ],
+            "env": {
+                "LD_LIBRARY_PATH": "/opt/mylib",
+                "SOME_PARAMETER": "value-x"
+            },
+            "cwd": "/tmp"
         },
         {
             "cmd": [
-                "/usr/bin/pss",
-                "-ax"
+                "/usr/bin/dd",
+                "if=/dev/urandom",
+                "of=/dev/null"
             ],
             "env": {
                 "LD_LIBRARY_PATH": "/opt/mylib",

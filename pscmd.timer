@@ -1,0 +1,8 @@
+[Unit]
+Description=Таймер для pscmd
+
+[Timer]
+OnActiveSec=30
+
+[Install]
+WantedBy=default.target

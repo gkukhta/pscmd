@@ -24,14 +24,19 @@
     5. установим зависимости программы командой `python -m pip install -r requirements.txt`
 
 - ### Запуск сервиса `pscmd.py`
-
-    1. Разрешаем запуск пользовательских сервисов без логина в систему командой `loginctl enable-linger super`
-    2. Создадим каталог, где будет находиться сервис pscmd `mkdir -p ~/.config/systemd/user`
-    3. Копируем туда файл сервиса [pscmd.service](pscmd.service) `cp pscmd.service ~/.config/systemd/user`
-    4. Запускаем сервис:
-    ```bash
-    systemctl --user enable pscmd.service
-    systemctl --user start pscmd.service
-    systemctl --user status pscmd.service
-    ```
-
+    * В случае, если будут запускаться только пользовательские службы без входа пользователя в систему (сервер).
+        1. Разрешаем запуск пользовательских сервисов без логина в систему командой `loginctl enable-linger super`
+        2. Создадим каталог, где будет находиться сервис pscmd `mkdir -p ~/.config/systemd/user`
+        3. Копируем туда файл сервиса [pscmd.service](pscmd.service) `cp pscmd.service ~/.config/systemd/user`
+        4. Запускаем сервис:
+        ```bash
+        systemctl --user enable pscmd.service
+        systemctl --user start pscmd.service
+        systemctl --user status pscmd.service
+        ```
+    * В случае, если будут запускаться программы на графическом рабочем столе (рабочая станция или киоск).
+        1. Запрещаем запуск пользовательских сервисов без логина в систему командой `loginctl disable-linger super`
+        2. Создадим каталог, где будет находиться сервис pscmd `mkdir -p ~/.config/systemd/user`
+        3. Копируем туда файл сервиса [pscmd.service](pscmd.service) `cp pscmd.service ~/.config/systemd/user`
+        4. Копируем туда файл таймера [pscmd.timer](pscmd.timer) `cp pscmd.timer ~/.config/systemd/user` 
+        В таймере прописана задержка старта сервиса в 30 секунд после активации таймера.
